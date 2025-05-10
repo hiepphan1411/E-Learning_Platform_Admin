@@ -11,9 +11,82 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Combobox from "../courses/ComboboxCustom";
-import axios from "axios"; // Import axios
 
-export default function CertificatesTable({ courses, onCoursesUpdate }) {
+// Mock data for certificates
+const mockCoursesWithCertificates = [
+  {
+    id: "C001",
+    name: "React JS - Từ cơ bản đến nâng cao",
+    actor: "Nguyễn Văn A",
+    category: "Lập trình web",
+    date: "15/03/2023",
+    price: 1200000,
+    image: "../courses/react.jpg",
+    certificate: {
+      status: "Chờ duyệt",
+      description: "Chứng chỉ hoàn thành khóa học ReactJS nâng cao",
+      submitted_date: "10/06/2023"
+    }
+  },
+  {
+    id: "C002",
+    name: "Python cho Data Science",
+    actor: "Trần Thị B",
+    category: "Khoa học dữ liệu",
+    date: "20/04/2023",
+    price: 1500000,
+    image: "../courses/python.jpg",
+    certificate: {
+      status: "Chờ duyệt",
+      description: "Chứng nhận hoàn thành khóa học Python cho phân tích dữ liệu",
+      submitted_date: "05/07/2023"
+    }
+  },
+  {
+    id: "C003",
+    name: "UI/UX Design Masterclass",
+    actor: "Lê Văn C",
+    category: "Thiết kế",
+    date: "10/05/2023",
+    price: 1800000,
+    image: "../courses/uiux.jpg",
+    certificate: {
+      status: "Chờ duyệt",
+      description: "Chứng nhận kỹ năng UI/UX Design chuyên nghiệp",
+      submitted_date: "12/07/2023"
+    }
+  },
+  {
+    id: "C004",
+    name: "Machine Learning cơ bản",
+    actor: "Phạm Thị D",
+    category: "AI & Machine Learning",
+    date: "25/05/2023", 
+    price: 2000000,
+    image: "../courses/ml.jpg",
+    certificate: {
+      status: "Chờ duyệt",
+      description: "Chứng nhận hoàn thành khóa học Machine Learning cơ bản",
+      submitted_date: "20/07/2023"
+    }
+  },
+  {
+    id: "C005",
+    name: "Docker và Kubernetes",
+    actor: "Hoàng Văn E",
+    category: "DevOps",
+    date: "08/06/2023",
+    price: 1700000,
+    image: "../courses/docker.jpg",
+    certificate: {
+      status: "Chờ duyệt",
+      description: "Chứng nhận kỹ năng triển khai ứng dụng với Docker và Kubernetes",
+      submitted_date: "22/07/2023"
+    }
+  }
+];
+
+export default function CertificatesTable({ courses = mockCoursesWithCertificates, onCoursesUpdate }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [alphabetOption, setAlphabetOption] = useState("A-Z");
@@ -185,57 +258,37 @@ export default function CertificatesTable({ courses, onCoursesUpdate }) {
 
     setIsLoading(true);
 
-    const courseId = selectedCertificate.id;
-    
-    const payload = {
-      certificate: {
-        ...selectedCertificate.certificate,
-        status: "Đã duyệt",
-        approved_by: "Admin",
-        approval_date: new Date().toISOString()
+    // Simulate API call with timeout
+    setTimeout(() => {
+      const courseId = selectedCertificate.id;
+      
+      // Update the course in the mock data
+      const updatedCourses = courses.map((course) =>
+        course.id === courseId 
+          ? {
+              ...course,
+              certificate: {
+                ...course.certificate,
+                status: "Đã duyệt",
+                approved_by: "Admin",
+                approval_date: new Date().toISOString(),
+              },
+            }
+          : course
+      );
+
+      if (onCoursesUpdate) {
+        onCoursesUpdate(updatedCourses);
       }
-    };
 
-    axios
-      .put(
-        `http://localhost:5000/api/all-data/courses/by/id/${courseId}`,
-        payload
-      )
-      .then((response) => {
-        const updatedCourses = courses.map((course) =>
-          course.id === courseId 
-            ? {
-                ...course,
-                certificate: {
-                  ...course.certificate,
-                  status: "Đã duyệt",
-                  approved_by: "Admin",
-                  approval_date: new Date().toISOString(),
-                },
-              }
-            : course
-        );
+      setFilteredCourses((prevFiltered) =>
+        prevFiltered.filter((course) => course.id !== courseId)
+      );
 
-        if (onCoursesUpdate) {
-          onCoursesUpdate(updatedCourses);
-        }
-
-        setFilteredCourses((prevFiltered) =>
-          prevFiltered.filter((course) => course.id !== courseId)
-        );
-
-        setSelectedCertificate(null);
-        setIsLoading(false);
-        showNotification("success", "Chứng chỉ đã được duyệt thành công!");
-      })
-      .catch((error) => {
-        console.error("Error approving certificate:", error);
-        console.error("Server response:", error.response?.data);
-
-        setError("Failed to approve certificate");
-        showNotification("error", "Lỗi khi duyệt chứng chỉ!");
-        setIsLoading(false);
-      });
+      setSelectedCertificate(null);
+      setIsLoading(false);
+      showNotification("success", "Chứng chỉ đã được duyệt thành công!");
+    }, 1000); // Simulate network delay
   };
 
   // Hàm đánh dấu vi phạm
@@ -244,60 +297,37 @@ export default function CertificatesTable({ courses, onCoursesUpdate }) {
 
     setIsLoading(true);
 
-    const courseId = selectedCertificate.id;
-    
-    // Tạo payload với thông tin cập nhật cho chứng chỉ
-    const payload = {
-      certificate: {
-        ...selectedCertificate.certificate,
-        status: "Vi phạm",
-        rejected_by: "Admin",
-        rejection_date: new Date().toISOString()
+    // Simulate API call with timeout
+    setTimeout(() => {
+      const courseId = selectedCertificate.id;
+      
+      // Update the course in the mock data
+      const updatedCourses = courses.map((course) =>
+        course.id === courseId
+          ? {
+              ...course,
+              certificate: {
+                ...course.certificate,
+                status: "Vi phạm",
+                rejected_by: "Admin",
+                rejection_date: new Date().toISOString(),
+              },
+            }
+          : course
+      );
+
+      if (onCoursesUpdate) {
+        onCoursesUpdate(updatedCourses);
       }
-    };
 
-    axios
-      .put(
-        `http://localhost:5000/api/all-data/courses/by/id/${courseId}`,
-        payload
-      )
-      .then((response) => {
-        console.log("Certificate rejected successfully:", response.data);
+      setFilteredCourses((prevFiltered) =>
+        prevFiltered.filter((course) => course.id !== courseId)
+      );
 
-        const updatedCourses = courses.map((course) =>
-          course.id === courseId
-            ? {
-                ...course,
-                certificate: {
-                  ...course.certificate,
-                  status: "Vi phạm",
-                  rejected_by: "Admin",
-                  rejection_date: new Date().toISOString(),
-                },
-              }
-            : course
-        );
-
-        if (onCoursesUpdate) {
-          onCoursesUpdate(updatedCourses);
-        }
-
-        setFilteredCourses((prevFiltered) =>
-          prevFiltered.filter((course) => course.id !== courseId)
-        );
-
-        setSelectedCertificate(null);
-        setIsLoading(false);
-        showNotification("success", "Chứng chỉ đã bị đánh dấu vi phạm!");
-      })
-      .catch((error) => {
-        console.error("Error rejecting certificate:", error);
-        console.error("Server response:", error.response?.data);
-
-        setError("Failed to reject certificate");
-        showNotification("error", "Lỗi khi đánh dấu vi phạm chứng chỉ!");
-        setIsLoading(false);
-      });
+      setSelectedCertificate(null);
+      setIsLoading(false);
+      showNotification("success", "Chứng chỉ đã bị đánh dấu vi phạm!");
+    }, 1000); // Simulate network delay
   };
 
   return (

@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Combobox from "./ComboboxCustom";
-import axios from "axios";
 import Notification from "../common/Notification";
 
 // Add custom scrollbar styling
@@ -232,70 +231,35 @@ const CoursesTable = ({courses = [], onCoursesUpdate}) => {
     if (!selectedCourse) return;
     const previousStatus = courses.find(c => c.id === selectedCourse.id)?.statusbar;
 
-    // Tạo payload
-    const payload = {
-      name: selectedCourse.name,
-      actor: selectedCourse.actor,
-      category: selectedCourse.categoryObject,
-      price: parseFloat(selectedCourse.price),
-      statusbar: selectedCourse.statusbar,
-      ...(selectedCourse.date && {
-        date: new Date(selectedCourse.date).toISOString(),
-      }),
-    };
-
-    if (
-      selectedCourse.image &&
-      selectedCourse.image !==
-        courses.find((c) => c.id === selectedCourse.id)?.image
-    ) {
-      payload.image = selectedCourse.image;
-    }
-
-    const courseId = selectedCourse.id;
     setIsLoading(true);
-    axios
-      .put(
-        `http://localhost:5000/api/all-data/courses/by/id/${courseId}`,
-        payload
-      )
-      .then((response) => {
-        console.log("Course updated successfully:", response.data);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      const courseId = selectedCourse.id;
+      const updatedCourses = courses.map(course => 
+        course.id === courseId ? selectedCourse : course
+      );
 
-        const updatedData = mapApiResponseToCourse(response.data);
-        const updatedCourses = courses.map(course => 
-          course.id === courseId ? updatedData : course
-        );
+      if (onCoursesUpdate) {
+        onCoursesUpdate(updatedCourses);
+      }
 
-        if (onCoursesUpdate) {
-          onCoursesUpdate(updatedCourses);
+      setFilteredCourses(prevFiltered => {
+        if (previousStatus !== selectedCourse.statusbar && 
+            sortOption !== "Tất cả" && 
+            sortOption !== selectedCourse.statusbar) {
+          return prevFiltered.filter(course => course.id !== courseId);
+        } else {
+          return prevFiltered.map(course => 
+            course.id === courseId ? selectedCourse : course
+          );
         }
-
-        setFilteredCourses(prevFiltered => {
-          if (previousStatus !== updatedData.statusbar && 
-              sortOption !== "Tất cả" && 
-              sortOption !== updatedData.statusbar) {
-            return prevFiltered.filter(course => course.id !== courseId);
-          } else {
-            return prevFiltered.map(course => 
-              course.id === courseId ? updatedData : course
-            );
-          }
-        });
-        
-        handleCloseModal();
-        showNotification("success", "Cập nhật khóa học thành công!");
-      })
-      .catch((error) => {
-        console.error("Error updating course:", error);
-        console.error("Server response:", error.response?.data);
-
-        setError("Failed to update course. Changes applied locally only.");
-        showNotification("error", "Lỗi khi cập nhật khóa học!");
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
+      
+      handleCloseModal();
+      showNotification("success", "Cập nhật khóa học thành công!");
+      setIsLoading(false);
+    }, 800);
   };
 
   const mapApiResponseToCourse = (apiResponse) => {
@@ -330,45 +294,31 @@ const CoursesTable = ({courses = [], onCoursesUpdate}) => {
     const courseToUpdate = courses.find((course) => course.id === courseId);
     if (!courseToUpdate) return;
 
-    const payload = {
-      statusbar: "Đã duyệt",
-    };
     setIsLoading(true);
 
-    axios
-      .put(
-        `http://localhost:5000/api/all-data/courses/by/id/${courseId}`,
-        payload
-      )
-      .then((response) => {
-        console.log("Course approved:", response.data);
-        const updatedCourses = courses.map(course => 
-          course.id === courseId ? {...course, statusbar: "Đã duyệt"} : course
-        );
-        
-        if (onCoursesUpdate) {
-          onCoursesUpdate(updatedCourses);
+    // Simulate API call with timeout
+    setTimeout(() => {
+      const updatedCourses = courses.map(course => 
+        course.id === courseId ? {...course, statusbar: "Đã duyệt"} : course
+      );
+      
+      if (onCoursesUpdate) {
+        onCoursesUpdate(updatedCourses);
+      }
+      
+      setFilteredCourses(prevFiltered => {
+        if (sortOption === "Đã duyệt" || sortOption === "Tất cả") {
+          return prevFiltered.map(course => 
+            course.id === courseId ? {...course, statusbar: "Đã duyệt"} : course
+          );
+        } else {
+          return prevFiltered.filter(course => course.id !== courseId);
         }
-        
-        setFilteredCourses(prevFiltered => {
-          if (sortOption === "Đã duyệt" || sortOption === "Tất cả") {
-            return prevFiltered.map(course => 
-              course.id === courseId ? {...course, statusbar: "Đã duyệt"} : course
-            );
-          } else {
-            return prevFiltered.filter(course => course.id !== courseId);
-          }
-        });
-        
-        setIsLoading(false);
-        showNotification("success", "Khóa học đã được duyệt thành công!");
-      })
-      .catch((error) => {
-        console.error("Error approving course:", error);
-        setError("Đã xảy ra lỗi. Vui lòng thử lại sau!");
-        showNotification("error", "Lỗi khi duyệt khóa học!");
-        setIsLoading(false);
       });
+      
+      setIsLoading(false);
+      showNotification("success", "Khóa học đã được duyệt thành công!");
+    }, 600);
   };
 
   const handleOpenDeleteModal = (course) => {
@@ -386,33 +336,24 @@ const CoursesTable = ({courses = [], onCoursesUpdate}) => {
     if (!courseToDelete) return;
 
     const courseId = courseToDelete.id;
-
     setIsLoading(true);
-    axios
-      .delete(`http://localhost:5000/api/all-data/courses/by/id/${courseId}`)
-      .then((response) => {
-        const updatedCourses = courses.filter(course => course.id !== courseId);
 
-        if (onCoursesUpdate) {
-          onCoursesUpdate(updatedCourses);
-        }
-        
-        setFilteredCourses(prevFiltered => 
-          prevFiltered.filter(course => course.id !== courseId)
-        );
-        
-        setIsLoading(false);
-        showNotification("success", "Xóa khóa học thành công!");
-      })
-      .catch((error) => {
-        console.error("Error deleting course:", error);
-        setError("Đã xảy ra lỗi. Vui lòng thử lại sau!");
-        showNotification("error", "Lỗi khi xóa khóa học!");
-        setIsLoading(false);
-      })
-      .finally(() => {
-        handleCloseDeleteModal();
-      });
+    // Simulate API call with timeout
+    setTimeout(() => {
+      const updatedCourses = courses.filter(course => course.id !== courseId);
+
+      if (onCoursesUpdate) {
+        onCoursesUpdate(updatedCourses);
+      }
+      
+      setFilteredCourses(prevFiltered => 
+        prevFiltered.filter(course => course.id !== courseId)
+      );
+      
+      setIsLoading(false);
+      showNotification("success", "Xóa khóa học thành công!");
+      handleCloseDeleteModal();
+    }, 700);
   };
 
   // Định dạng ngày

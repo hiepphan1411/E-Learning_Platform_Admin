@@ -12,9 +12,57 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import axios from "axios";
 
-export default function UsersTable({ users: initialUsers }) {
+// Mock users data to use when no initialUsers is provided
+const mockUsers = [
+  {
+    id: "U001",
+    name: "Nguyễn Văn Admin",
+    email: "admin@example.com",
+    pass: "admin123",
+    typeUser: "Quản trị viên",
+    status: "Hoạt động",
+    avatar: "../avatars/admin.jpg"
+  },
+  {
+    id: "U002",
+    name: "Trần Thị Teacher",
+    email: "teacher@example.com",
+    pass: "teacher123",
+    typeUser: "Giáo viên",
+    status: "Hoạt động",
+    avatar: "../avatars/teacher.jpg"
+  },
+  {
+    id: "U003",
+    name: "Lê Văn Student",
+    email: "student@example.com",
+    pass: "student123",
+    typeUser: "Học viên",
+    status: "Hoạt động",
+    avatar: "../avatars/student.jpg"
+  },
+  {
+    id: "U004",
+    name: "Phạm Thị Disabled",
+    email: "disabled@example.com",
+    pass: "disabled123",
+    typeUser: "Học viên",
+    status: "Vô hiệu hóa",
+    avatar: "../avatars/disabled.jpg"
+  },
+  {
+    id: "U005",
+    name: "Hoàng Văn Teacher2",
+    email: "teacher2@example.com",
+    pass: "teacher456",
+    typeUser: "Giáo viên",
+    status: "Hoạt động",
+    avatar: null
+  }
+];
+
+export default function UsersTable({ users: initialUsers = mockUsers }) {
   const [users, setUsers] = useState(initialUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -147,78 +195,44 @@ export default function UsersTable({ users: initialUsers }) {
     }));
   }, []);
 
-  // Chỉnh sửa người dùng
-  const handleSaveChanges = useCallback(async () => {
+  // Chỉnh sửa người dùng - Local only version
+  const handleSaveChanges = useCallback(() => {
     if (!selectedUser) return;
-
     const previousStatus = users.find(u => u.id === selectedUser.id)?.status;
 
-    // Tạo payload
-    const payload = {
-      name: selectedUser.name,
-      email: selectedUser.email,
-      pass: selectedUser.pass,
-      typeUser: selectedUser.typeUser,
-      status: selectedUser.status,
-    };
-
-    if (
-      selectedUser.avatar &&
-      selectedUser.avatar !==
-        users.find((u) => u.id === selectedUser.id)?.avatar
-    ) {
-      payload.avatar = selectedUser.avatar;
-    }
-
-    const userId = selectedUser.id;
     setIsLoading(true);
     setErrorMessage("");
 
-    try {
-      const response = await axios.put(
-        `http://localhost:5000/api/all-data/users/by/id/${userId}`,
-        payload
-      );
-
-      if (response.data && response.data.document) {
-        const updatedData = response.data.document;
-        
-        const originalUser = users.find(u => u.id === userId);
-        const mergedData = {
-          ...updatedData,
-          avatar: updatedData.avatar || originalUser.avatar
-        };
-        
-        setUsers(prevUsers => 
-          prevUsers.map(user => user.id === userId ? mergedData : user)
+    // Simulate API call with timeout
+    setTimeout(() => {
+      try {
+        // Update the users data locally
+        const updatedUsers = users.map(user => 
+          user.id === selectedUser.id ? {...selectedUser} : user
         );
         
+        setUsers(updatedUsers);
+        
         setFilteredUsers(prevFiltered => {
-          if (previousStatus !== updatedData.status && 
+          if (previousStatus !== selectedUser.status && 
               statusFilter !== "Tất cả" && 
-              statusFilter !== updatedData.status) {
-            return prevFiltered.filter(user => user.id !== userId);
+              statusFilter !== selectedUser.status) {
+            return prevFiltered.filter(user => user.id !== selectedUser.id);
           } else {
             return prevFiltered.map(user => 
-              user.id === userId ? updatedData : user
+              user.id === selectedUser.id ? {...selectedUser} : user
             );
           }
         });
 
         handleCloseModal();
-      } else {
-        setErrorMessage(
-          response.data.error || "Không thể cập nhật người dùng"
-        );
+      } catch (error) {
+        console.error("Error updating user:", error);
+        setErrorMessage("Đã xảy ra lỗi khi cập nhật người dùng");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error updating user:", error);
-      setErrorMessage(
-        error.response?.data?.error || "Đã xảy ra lỗi khi cập nhật người dùng"
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    }, 800); // Simulate network delay
   }, [selectedUser, users, statusFilter, handleCloseModal]);
 
   const handleOpenDeleteModal = useCallback((user) => {
@@ -233,63 +247,54 @@ export default function UsersTable({ users: initialUsers }) {
     setErrorMessage("");
   }, []);
 
-  const handleDeleteUser = useCallback(async () => {
+  // Delete user - Local only version
+  const handleDeleteUser = useCallback(() => {
+    if (!userToDelete) return;
+    
     setIsLoading(true);
     setErrorMessage("");
-    try {
-      const response = await axios.delete(
-        `http://localhost:5000/api/all-data/users/by/id/${userToDelete.id}`
-      );
-
-      if (response.data && response.data.message) {
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      try {
+        // Update data locally by filtering out the deleted user
         setUsers(prevUsers => prevUsers.filter(user => user.id !== userToDelete.id));
         setFilteredUsers(prevFiltered => prevFiltered.filter(user => user.id !== userToDelete.id));
         handleCloseDeleteModal();
-      } else {
-        setErrorMessage(response.data.error || "Không thể xóa người dùng");
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        setErrorMessage("Đã xảy ra lỗi khi xóa người dùng");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      setErrorMessage(
-        error.response?.data?.error || "Đã xảy ra lỗi khi xóa người dùng"
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    }, 800); // Simulate network delay
   }, [userToDelete, handleCloseDeleteModal]);
 
-  const handleToggleUserStatus = useCallback(async (user) => {
+  // Toggle user status - Local only version
+  const handleToggleUserStatus = useCallback((user) => {
     setIsLoading(true);
     
-    try {
-      const newStatus = user.status === "Hoạt động" ? "Vô hiệu hóa" : "Hoạt động";
-      
-      const updatedUserData = { ...user, status: newStatus };
-      
-      const response = await axios.put(
-        `http://localhost:5000/api/all-data/users/by/id/${user.id}`,
-        updatedUserData
-      );
-      
-      if (response.data && response.data.document) {
-        const updatedUser = response.data.document;
+    // Simulate API call with timeout
+    setTimeout(() => {
+      try {
+        const newStatus = user.status === "Hoạt động" ? "Vô hiệu hóa" : "Hoạt động";
         
-        setUsers(prevUsers => prevUsers.map(u => u.id === user.id ? updatedUser : u));
+        const updatedUserData = { ...user, status: newStatus };
+        
+        setUsers(prevUsers => prevUsers.map(u => u.id === user.id ? updatedUserData : u));
         
         setFilteredUsers(prevUsers => {
           if (statusFilter !== "Tất cả" && statusFilter !== newStatus) {
             return prevUsers.filter(u => u.id !== user.id);
           }
-          return prevUsers.map(u => u.id === user.id ? updatedUser : u);
+          return prevUsers.map(u => u.id === user.id ? updatedUserData : u);
         });
-      } else {
-        console.error("Failed to update user status:", response.data);
+      } catch (error) {
+        console.error("Error updating user status:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error updating user status:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    }, 600); // Simulate network delay
   }, [statusFilter]);
 
   const togglePasswordVisibility = useCallback(() => {
@@ -408,11 +413,7 @@ export default function UsersTable({ users: initialUsers }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
-                    <img
-                      src={getImageSrc(user.avatar)}
-                      alt="user img"
-                      className="size-10 rounded-full"
-                    />
+
                     {user.name}
                   </div>
                 </td>
