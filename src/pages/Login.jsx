@@ -7,40 +7,67 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const { handleLogin } = useContext(AuthContext);
-  const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetch("http://localhost:5000/api/all-data/users") 
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("fetch() got:", data);
-        const formattedData = data.map((user) => ({
-          id: user.id || user._id,
-          name: user.name || "Unknown User",
-          birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split("T")[0] : "N/A",
-          username: user.account?.user_name || "N/A",
-          email: user.email || "N/A",
-          type: user.account?.type || 0,
-          pass: user.account?.password || "N/A",
-          createdAt: user.account?.createAt ? new Date(user.account.createAt).toISOString().split("T")[0] : "N/A",
-          source: user.account?.To || "Direct",
-          typeUser: user.typeUser || "Học viên",
-          status: user.status || "N/A",
-          avatar: user.avatarData || "../avatarAdmin.png",
-          _original: user,
-        }));
-        setUsers(formattedData);
-      })
-      .catch((err) => {
-        console.error("fetch() error:", err);
-      });
-  }, []);
+  
+  // Replace API fetch with mock data
+  const [users] = useState([
+    {
+      id: 1,
+      name: "Admin User",
+      birthDate: "1990-01-15",
+      username: "admin",
+      email: "admin@higi.edu.vn",
+      type: 1,
+      pass: "admin123",
+      createdAt: "2023-01-01",
+      source: "Direct",
+      typeUser: "Quản trị viên",
+      status: "Active",
+      avatar: "../avatarAdmin.png"
+    },
+    {
+      id: 2,
+      name: "John Smith",
+      birthDate: "1985-05-20",
+      username: "student",
+      email: "john@higi.edu.vn",
+      type: 0,
+      pass: "student123",
+      createdAt: "2023-02-15",
+      source: "Google",
+      typeUser: "Học viên",
+      status: "Active",
+      avatar: "../user-avatars/john.jpg"
+    },
+    {
+      id: 3,
+      name: "Super Admin",
+      birthDate: "1988-07-12",
+      username: "superadmin",
+      email: "super@higi.edu.vn",
+      type: 2,
+      pass: "super123",
+      createdAt: "2022-12-01",
+      source: "Direct",
+      typeUser: "Quản trị viên",
+      status: "Active",
+      avatar: "../avatarAdmin.png"
+    },
+    {
+      id: 4,
+      name: "Maria Garcia",
+      birthDate: "1992-11-30",
+      username: "maria_garcia",
+      email: "maria@higi.edu.vn",
+      type: 1,
+      pass: "maria123",
+      createdAt: "2023-03-10",
+      source: "Facebook",
+      typeUser: "Quản trị viên",
+      status: "Active",
+      avatar: "../user-avatars/maria.jpg"
+    }
+  ]);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("adminEmail");
