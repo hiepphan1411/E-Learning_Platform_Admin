@@ -7,81 +7,14 @@ import {
   ArrowDownRight,
   ArrowUpRight
 } from "lucide-react";
-import { useEffect, useState } from "react";
 
-export default function OverviewCards({salesData, users, logs}) {
-  const [overviewData, setOverviewData] = useState([]);
-  
-  useEffect(() => {
-    if (salesData && users.length > 0 && logs.length > 0) {
-      const getCurrentMonth = () => new Date().getMonth();
-      const getPreviousMonth = () => (getCurrentMonth() === 0 ? 11 : getCurrentMonth() - 1);
-      const getCurrentYear = () => new Date().getFullYear();
-      const getPreviousYear = () => getCurrentMonth() === 0 ? getCurrentYear() - 1 : getCurrentYear();
-      
-      const filterByMonth = (data, month, year) => {
-        return data.filter(item => {
-          const date = new Date(item.date_of_purchase);
-          return date.getMonth() === month && date.getFullYear() === year;
-        });
-      };
-      
-      const currentMonthSales = filterByMonth(salesData, getCurrentMonth(), getCurrentYear());
-      const previousMonthSales = filterByMonth(salesData, getPreviousMonth(), getPreviousYear());
-      
-      const currentMonthLogs = filterByMonth(logs, getCurrentMonth(), getCurrentYear());
-      const previousMonthLogs = filterByMonth(logs, getPreviousMonth(), getPreviousYear());
-      
-      //Trừ thuế 10%
-      const calculateProfit = (sales) => {
-        const totalSales = sales.reduce((sum, sale) => sum + (sale.price || 0), 0);
-        return totalSales * 0.9;
-      };
-      
-      const currentProfit = calculateProfit(currentMonthSales);
-      const previousProfit = calculateProfit(previousMonthSales);
-      
-      const calculateChange = (current, previous) => {
-        if (previous === 0) return current > 0 ? 100 : 0;
-        return ((current - previous) / previous) * 100;
-      };
-      
-      // Format tiền
-      const formatNumber = (num) => {
-        return new Intl.NumberFormat('vi-VN').format(Math.round(num));
-      };
-      
-      const newOverviewData = [
-        { 
-          name: "Lợi nhuận", 
-          value: formatNumber(currentProfit), 
-          change: parseFloat(calculateChange(currentProfit, previousProfit).toFixed(1)), 
-          icon: DollarSign 
-        },
-        { 
-          name: "Người dùng", 
-          value: formatNumber(users.length), 
-          change: parseFloat(calculateChange(users.length, users.length - 5).toFixed(1)), 
-          icon: Users 
-        },
-        { 
-          name: "Hóa đơn tháng này", 
-          value: formatNumber(currentMonthSales.length), 
-          change: parseFloat(calculateChange(currentMonthSales.length, previousMonthSales.length).toFixed(1)), 
-          icon: ShoppingBag 
-        },
-        { 
-          name: "Lượt xem trang", 
-          value: formatNumber(currentMonthLogs.length), 
-          change: parseFloat(calculateChange(currentMonthLogs.length, previousMonthLogs.length).toFixed(1)), 
-          icon: Eye 
-        },
-      ];
-      
-      setOverviewData(newOverviewData);
-    }
-  }, [salesData, users, logs]);
-
+const overviewData = [
+  { name: "Lợi nhuận", value: "1,234,567", change: 12.5, icon: DollarSign },
+  { name: "Người dùng", value: "45,678", change: 8.3, icon: Users },
+  { name: "Hóa đơn tháng này", value: "9,876", change: -3.2, icon: ShoppingBag },
+  { name: "Lượt xem trang", value: "1,234,567", change: 15.7, icon: Eye },
+];
+export default function OverviewCards() {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
       {overviewData.map((item, index) => (

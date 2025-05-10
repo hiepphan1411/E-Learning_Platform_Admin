@@ -2,6 +2,16 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
+const monthlySalesData = [
+	{ month: "T1", sales: 4000000 },
+	{ month: "T2", sales: 3000000 },
+	{ month: "T3", sales: 5000000 },
+	{ month: "T4", sales: 4500000 },
+	{ month: "T5", sales: 6000000 },
+	{ month: "T6", sales: 5500000 },
+	{ month: "T7", sales: 7000000 },
+];
+
 const getStartOfWeek = (date) => {
   const newDate = new Date(date);
   const day = newDate.getDay();
@@ -181,51 +191,45 @@ export default function LineSalesOverview({ dataSales = [] }) {
         </select>
       </div>
 
-      {processedData.hasData ? (
-        <>
-          <div className='w-full h-80'>
-            <ResponsiveContainer>
-              <AreaChart 
-                data={processedData.chartData}
-              >
-                <CartesianGrid strokeDasharray='3 3' stroke='#374151' />
-                <XAxis 
-                  dataKey='date' 
-                  stroke='#9CA3AF'
-                />
-                <YAxis stroke='#9CA3AF' />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "rgba(31, 41, 55, 0.8)", borderColor: "#4B5563" }}
-                  itemStyle={{ color: "#E5E7EB" }}
-                  formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
-                />
-                <Legend />
-                <Area 
-                  type='monotone' 
-                  dataKey='sales' 
-                  stroke='#8B5CF6' 
-                  fill='#8B5CF6' 
-                  fillOpacity={0.3} 
-                  name='Doanh thu'
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+      <div className='w-full h-80'>
+        <ResponsiveContainer>
+          <AreaChart 
+            data={monthlySalesData}
+          >
+            <CartesianGrid strokeDasharray='3 3' stroke='#374151' />
+            <XAxis 
+              dataKey='month' 
+              stroke='#9CA3AF'
+            />
+            <YAxis stroke='#9CA3AF' />
+            <Tooltip
+              contentStyle={{ backgroundColor: "rgba(31, 41, 55, 0.8)", borderColor: "#4B5563" }}
+              itemStyle={{ color: "#E5E7EB" }}
+              formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
+            />
+            <Legend />
+            <Area 
+              type='monotone' 
+              dataKey='sales' 
+              stroke='#8B5CF6' 
+              fill='#8B5CF6' 
+              fillOpacity={0.3} 
+              name='Doanh thu'
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
 
-          <div className="mt-4 text-gray-200">
-            <p>
-              {`Tổng doanh thu ${processedData.periodLabel}: `}
-              <span className="font-semibold">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(processedData.totalRevenue)}
-              </span>
-            </p>
-          </div>
-        </>
-      ) : (
-        <div className="flex items-center justify-center h-80 text-gray-400 text-center">
-          <p className="text-xl">Không có dữ liệu thống kê trong {selectedTimeRange.toLowerCase()}</p>
-        </div>
-      )}
+      <div className="mt-4 text-gray-200">
+        <p>
+          {`Tổng doanh thu ${selectedTimeRange}: `}
+          <span className="font-semibold">
+            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+              monthlySalesData.reduce((sum, item) => sum + item.sales, 0)
+            )}
+          </span>
+        </p>
+      </div>
     </motion.div>
   );
 }

@@ -10,12 +10,43 @@ import {
   RefreshCw,
 } from "lucide-react";
 import PopupMenu from "./PopupMenu";
-import io from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../App";
+
+// Mock notification data
+const mockNotifications = [
+  {
+    id: '1',
+    message: 'Người dùng mới đã đăng ký tài khoản',
+    createdAt: new Date(Date.now() - 300000), // 5 minutes ago
+    read: false,
+    type: 'user'
+  },
+  {
+    id: '2',
+    message: 'Khóa học "React Fundamentals" đã được tạo',
+    createdAt: new Date(Date.now() - 3600000), // 1 hour ago
+    read: false,
+    type: 'course'
+  },
+  {
+    id: '3',
+    message: 'Yêu cầu phê duyệt từ giảng viên mới',
+    createdAt: new Date(Date.now() - 86400000), // 1 day ago
+    read: true,
+    type: 'request'
+  },
+  {
+    id: '4',
+    message: 'Báo cáo hệ thống: Bảo trì hệ thống sắp tới',
+    createdAt: new Date(Date.now() - 172800000), // 2 days ago
+    read: true,
+    type: 'system'
+  }
+];
 
 const Header = ({ title }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -23,24 +54,28 @@ const Header = ({ title }) => {
   const [notifications, setNotifications] = useState([]);
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
-  const socketRef = useRef(null);
   const navigate = useNavigate();
   const { userData } = useContext(AuthContext);
 
+  // Simulate receiving notifications
   useEffect(() => {
-    socketRef.current = io("http://localhost:5000");
+    // Load initial mock notifications
+    const formattedNotifications = mockNotifications.map(formatNotification);
+    setNotifications(formattedNotifications);
 
-    socketRef.current.on("new_notification", (notification) => {
-      setNotifications((prev) => {
-        return [formatNotification(notification), ...prev];
-      });
-    });
+    // Simulate a new notification arriving every 30 seconds
+    const interval = setInterval(() => {
+      const newNotification = {
+        id: Date.now().toString(),
+        message: `Thông báo mới lúc ${new Date().toLocaleTimeString()}`,
+        createdAt: new Date(),
+        read: false,
+        type: ['user', 'course', 'request', 'system', 'report'][Math.floor(Math.random() * 5)]
+      };
+      setNotifications(prev => [formatNotification(newNotification), ...prev]);
+    }, 30000);
 
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
+    return () => clearInterval(interval);
   }, []);
 
   // Kiểm tra xem chuỗi có phải là Base64 hay không
@@ -55,14 +90,12 @@ const Header = ({ title }) => {
 
   //Chuyển đổi Base64 thành URL
   const getImageSrc = (image) => {
-    console.log(image);
     if (!image) return "../avatarAdmin.png";
 
     if (isBase64Image(image)) {
       if (image.startsWith("data:")) {
         return image;
       }
-      console.log(image);
       return `data:image/jpeg;base64,${image}`;
     }
 
@@ -83,26 +116,6 @@ const Header = ({ title }) => {
       createdAt: createdAt,
     };
   };
-
-  // Fetch thông báo ban đầu
-  useEffect(() => {
-    fetch("http://localhost:5000/api/all-data/notifications")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        const formattedNotifications = data
-          .map(formatNotification)
-          .sort((a, b) => b.createdAt - a.createdAt);
-        setNotifications(formattedNotifications);
-      })
-      .catch((error) => {
-        console.error("Error fetching notifications:", error);
-      });
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -137,33 +150,16 @@ const Header = ({ title }) => {
         notification.id === id ? { ...notification, read: true } : notification
       )
     );
-
-    fetch(`http://localhost:5000/api/all-data/notifications/by/_id/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ read: true }),
-    }).catch((err) =>
-      console.error("Error marking notification as read:", err)
-    );
   };
 
   const deleteNotification = (id) => {
     setNotifications(
       notifications.filter((notification) => notification.id !== id)
     );
-    fetch(`http://localhost:5000/api/notifications/by/id/${id}`, {
-      method: "DELETE",
-    }).catch((err) => console.error("Error deleting notification:", err));
   };
 
   const deleteAllNotifications = () => {
     setNotifications([]);
-
-    fetch(`http://localhost:5000/api/notifications/delete-all`, {
-      method: "DELETE",
-    }).catch((err) => console.error("Error deleting all notifications:", err));
   };
 
   const getNotificationIcon = (type) => {
@@ -211,21 +207,6 @@ const Header = ({ title }) => {
         </div>
         <div className="text-white text-xl ml-8 w-10">{title}</div>
       </div>
-
-      {/* <div className="flex-1 max-w-lg mx-6">
-        <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Nhập từ khóa..." 
-            className="w-full py-1 px-3 pr-10 rounded-full bg-white text-gray-700 focus:outline-none"
-          />
-          <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-      </div> */}
 
       <div className="flex items-center">
         <div className="relative mr-4" ref={notificationsRef}>
@@ -368,7 +349,7 @@ const Header = ({ title }) => {
             onClick={toggleDropdown}
           >
             <img
-              src={getImageSrc(userData.avatar)}
+              src="../ZangHuynh.png"
               alt="Admin"
               className="w-9 h-9 rounded-full object-cover border-2 border-gray-600"
             />

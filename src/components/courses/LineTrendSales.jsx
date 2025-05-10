@@ -15,49 +15,26 @@ const LineTrendSales = () => {
   const [salesData, setSalesData] = useState([]);
   const currentYear = new Date().getFullYear(); 
   
-  // Fetch dữ liệu từ API
+  // Mock data thay thế cho fetch API
   useEffect(() => {
-    fetch("http://localhost:5000/api/all-data/user_courses")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        processSalesData(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching user courses:", error);
-      });
+    // Dữ liệu giả mô phỏng doanh thu theo tháng
+    const mockUserCourses = [
+      { month: "Jan", sales: 12500000 },
+      { month: "Feb", sales: 15800000 },
+      { month: "Mar", sales: 18700000 },
+      { month: "Apr", sales: 17200000 },
+      { month: "May", sales: 20500000 },
+      { month: "Jun", sales: 22000000 },
+      { month: "Jul", sales: 21300000 },
+      { month: "Aug", sales: 25600000 },
+      { month: "Sep", sales: 27800000 },
+      { month: "Oct", sales: 29000000 },
+      { month: "Nov", sales: 31200000 },
+      { month: "Dec", sales: 35000000 }
+    ];
+    
+    setSalesData(mockUserCourses);
   }, []);
-  
-  const processSalesData = (courses) => {
-    const salesByMonth = courses.reduce((acc, course) => {
-      const purchaseDate = new Date(course.date_of_purchase);
-      const year = purchaseDate.getFullYear();
-      
-      if (year === currentYear) {
-        const monthIndex = purchaseDate.getMonth(); 
-        const month = purchaseDate.toLocaleString('default', { month: 'short' });
-        
-        if (!acc[monthIndex]) {
-          acc[monthIndex] = { month, sales: 0 };
-        }
-        acc[monthIndex].sales += course.price;
-      }
-      return acc;
-    }, {});
-    
-    const chartData = Object.keys(salesByMonth)
-      .map(monthIndex => salesByMonth[monthIndex])
-      .sort((a, b) => {
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return monthNames.indexOf(a.month) - monthNames.indexOf(b.month);
-      });
-    
-    setSalesData(chartData);
-  };
 
   return (
     <motion.div
